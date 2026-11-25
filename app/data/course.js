@@ -7,7 +7,7 @@
              cijela riječ:  {psi|pl_irr|pas}
    Turske i arapske tekstove treba pregledati izvorni govornik prije objave. */
 window.COURSE = {
-  version: "1.3.1",
+  version: "1.3.2",
   units: [
     // ───────────────────────── A1 ─────────────────────────
     { id: "a1u1", level: "A1", icon: "👋", title: { bs: "Pozdravi", tr: "Selamlaşma", ar: "التحيات" },

@@ -1,6 +1,6 @@
 /* Govorimo service worker: rad bez interneta i automatsko ažuriranje.
    VERSION mijenja tools/release.mjs pri svakoj novoj verziji; promjena ovog fajla pokreće ažuriranje kod svih korisnika. */
-const VERSION = '1.3.1';
+const VERSION = '1.3.2';
 const CACHE = 'govorimo-' + VERSION;
 const CORE = [
   './', 'index.html', 'styles.css', 'app.js', 'i18n.js', 'data/course.js', 'data/daily.js', 'manifest.webmanifest',

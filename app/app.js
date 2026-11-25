@@ -1,7 +1,7 @@
 /* Govorimo – aplikacija za učenje bosanskog jezika (PWA, radi i u Android WebView ljusci). */
 (function () {
   'use strict';
-  const APP_VERSION = '1.3.1'; // mijenja ga tools/release.mjs
+  const APP_VERSION = '1.3.2'; // mijenja ga tools/release.mjs
   // TTS_ON: aplikacija izgovara riječi (isključeno dok bosanski glas nije dovoljno dobar; za uključivanje stavite true).
   // STT_ON: korisnik govori, a aplikacija ocjenjuje izgovor (uključeno).
   const TTS_ON = false;
