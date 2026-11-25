@@ -1,0 +1,10 @@
+# Nikad ne objavljuj ključ za potpisivanje
+*.jks
+*.keystore
+keystore-base64.txt
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+.DS_Store
+node_modules/

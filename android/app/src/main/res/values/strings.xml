@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Govorimo</string>
+    <!-- Adresa aplikacije na GitHub Pages. GitHub Actions je automatski upisuje pri gradnji. -->
+    <string name="app_url" translatable="false">https://KORISNIK.github.io/govorimo/</string>
+</resources>

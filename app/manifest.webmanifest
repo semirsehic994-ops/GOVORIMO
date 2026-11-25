@@ -1,0 +1,17 @@
+{
+  "name": "Govorimo – Boşnakça öğren · تعلّم البوسنية",
+  "short_name": "Govorimo",
+  "description": "Boşnakça öğren · تعلّم البوسنية",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4FBF7",
+  "theme_color": "#0F7F4F",
+  "lang": "bs",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

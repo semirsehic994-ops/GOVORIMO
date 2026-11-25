@@ -1,0 +1,110 @@
+# Objava: gradi Android APK (kad je verzija nova) i zatim objavljuje aplikaciju na GitHub Pages.
+# Pokreće se automatski pri svakom pushu na granu main, ili ručno (Actions → Objava → Run workflow).
+name: Objava
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: objava
+  cancel-in-progress: false
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    env:
+      HAS_KEY: ${{ secrets.KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Provjeri verziju
+        id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VN=$(grep '^versionName=' android/version.properties | cut -d= -f2 | tr -d '\r')
+          echo "name=$VN" >> "$GITHUB_OUTPUT"
+          if gh release view "v$VN" >/dev/null 2>&1; then
+            echo "APK v$VN već postoji, preskačem gradnju."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upozorenje bez ključa
+        if: steps.v.outputs.build == 'true' && env.HAS_KEY != 'true'
+        run: echo "::warning::Nema tajne KEYSTORE_BASE64. APK se ne gradi. Vidi UPUTE.md, korak 4."
+
+      - uses: actions/setup-java@v4
+        if: steps.v.outputs.build == 'true' && env.HAS_KEY == 'true'
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.v.outputs.build == 'true' && env.HAS_KEY == 'true'
+        with:
+          gradle-version: '8.9'
+
+      - name: Gradi APK
+        if: steps.v.outputs.build == 'true' && env.HAS_KEY == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+          if [ "${REPO,,}" = "$OWNER.github.io" ]; then URL="https://$OWNER.github.io/"; else URL="https://$OWNER.github.io/$REPO/"; fi
+          echo "Adresa aplikacije: $URL"
+          sed -i "s#https://KORISNIK.github.io/govorimo/#$URL#" android/app/src/main/res/values/strings.xml
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          export KEYSTORE_FILE="$RUNNER_TEMP/release.jks"
+          gradle -p android assembleRelease --no-daemon
+          cp android/app/build/outputs/apk/release/app-release.apk govorimo.apk
+
+      - name: Objavi APK (GitHub Releases)
+        if: steps.v.outputs.build == 'true' && env.HAS_KEY == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.v.outputs.name }}
+          name: Govorimo ${{ steps.v.outputs.name }}
+          files: govorimo.apk
+          make_latest: true
+
+  pages:
+    needs: android
+    if: always()
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upiši podatke o APK-u u version.json
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VN=$(grep '^versionName=' android/version.properties | cut -d= -f2 | tr -d '\r')
+          VC=$(grep '^versionCode=' android/version.properties | cut -d= -f2 | tr -d '\r')
+          if ! gh release view "v$VN" >/dev/null 2>&1; then VC=0; echo "APK v$VN još ne postoji, Android korisnici neće dobiti obavještenje."; fi
+          APK="https://github.com/$GITHUB_REPOSITORY/releases/download/v$VN/govorimo.apk"
+          node -e '
+            const fs = require("fs"); const p = "app/version.json"; const v = JSON.parse(fs.readFileSync(p, "utf8"));
+            v.android = { versionCode: Number(process.argv[1]), versionName: process.argv[2], apk: process.argv[3] };
+            fs.writeFileSync(p, JSON.stringify(v, null, 2) + "\n");' "$VC" "$VN" "$APK"
+          cat app/version.json
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app
+      - id: deploy
+        uses: actions/deploy-pages@v4

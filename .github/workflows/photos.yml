@@ -1,0 +1,39 @@
+# Fotografije: preuzima po jednu fotografiju s Pexelsa za svaku imenicu i ponovo objavljuje aplikaciju.
+# Potrebna je besplatna tajna PEXELS_API_KEY (vidi UPUTE.md, korak 8). Pokreće se ručno.
+name: Fotografije
+
+on:
+  workflow_dispatch:
+    inputs:
+      zamijeni:
+        description: 'Ponovo preuzmi i postojeće fotografije (da/ne)'
+        default: 'ne'
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  photos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Preuzmi fotografije
+        env:
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          REPLACE: ${{ github.event.inputs.zamijeni }}
+        run: node tools/fetch-photos.mjs
+      - name: Sačuvaj u repozitorij
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add app/img app/photos.json
+          git diff --cached --quiet || git commit -m "Fotografije s Pexelsa"
+          git push
+      - name: Pokreni objavu
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main
