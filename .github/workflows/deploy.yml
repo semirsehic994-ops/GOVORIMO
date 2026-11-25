@@ -64,7 +64,11 @@ jobs:
           if [ "${REPO,,}" = "$OWNER.github.io" ]; then URL="https://$OWNER.github.io/"; else URL="https://$OWNER.github.io/$REPO/"; fi
           echo "Adresa aplikacije: $URL"
           sed -i "s#https://KORISNIK.github.io/govorimo/#$URL#" android/app/src/main/res/values/strings.xml
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          PW="$(printf '%s' "$KEYSTORE_PASSWORD" | tr -d '\r\n\t ')"
+          PW="${PW#KEYSTORE_PASSWORD=}"
+          export KEYSTORE_PASSWORD="$PW"
+          echo "Duzina lozinke: ${#PW}"
+          printf '%s' "$KEYSTORE_BASE64" | tr -d '\r\n\t ' | base64 -d > "$RUNNER_TEMP/release.jks"
           export KEYSTORE_FILE="$RUNNER_TEMP/release.jks"
           gradle -p android assembleRelease --no-daemon
           cp android/app/build/outputs/apk/release/app-release.apk govorimo.apk
