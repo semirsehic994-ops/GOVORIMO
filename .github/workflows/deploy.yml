@@ -87,9 +87,6 @@ jobs:
     needs: android
     if: always()
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -111,5 +108,14 @@ jobs:
       - uses: actions/upload-pages-artifact@v4
         with:
           path: app
+
+  deploy:
+    needs: pages
+    if: always() && needs.pages.result == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
       - id: deploy
         uses: actions/deploy-pages@v5
