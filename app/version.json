@@ -1,8 +1,8 @@
 {
-  "version": "1.3.2",
+  "version": "1.3.3",
   "notes": {
-    "tr": "Geri bildirimler artık doğrudan geliştiriciye gidiyor.",
-    "ar": "تصل الملاحظات الآن مباشرة إلى المطوّر."
+    "tr": "Yeni: uygulamayı ana ekrana simge olarak ekle.",
+    "ar": "جديد: أضف التطبيق كأيقونة إلى الشاشة الرئيسية."
   },
   "android": {
     "versionCode": 1,

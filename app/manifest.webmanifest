@@ -2,6 +2,7 @@
   "name": "Govorimo – Boşnakça öğren · تعلّم البوسنية",
   "short_name": "Govorimo",
   "description": "Boşnakça öğren · تعلّم البوسنية",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

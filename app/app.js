@@ -1,7 +1,7 @@
 /* Govorimo – aplikacija za učenje bosanskog jezika (PWA, radi i u Android WebView ljusci). */
 (function () {
   'use strict';
-  const APP_VERSION = '1.3.2'; // mijenja ga tools/release.mjs
+  const APP_VERSION = '1.3.3'; // mijenja ga tools/release.mjs
   // TTS_ON: aplikacija izgovara riječi (isključeno dok bosanski glas nije dovoljno dobar; za uključivanje stavite true).
   // STT_ON: korisnik govori, a aplikacija ocjenjuje izgovor (uključeno).
   const TTS_ON = false;
@@ -13,6 +13,14 @@
   const C = window.COURSE;
   const I = window.I18N;
   const Android = window.GovorimoAndroid || null;
+  /* Instalacija ikone na početni ekran */
+  let BIP = null;
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isStandalone = () => !!(window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches));
+  const isMobile = () => /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent) || isIOS();
+  const canInstall = () => !Android && !isStandalone() && (BIP || isMobile());
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); BIP = e; try { render(); } catch (x) { /* još nije spremno */ } });
+  window.addEventListener('appinstalled', () => { BIP = null; try { render(); } catch (x) { /* */ } });
   const $app = document.getElementById('app');
 
   /* ───────────── Stanje (čuva se samo na uređaju) ───────────── */
@@ -145,6 +153,7 @@
     globe: (s) => sv('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>', s),
     info: (s) => sv('<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/>', s),
     chat: (s) => sv('<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>', s, 2.2),
+    phone: (s) => sv('<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 8v7M9 12l3 3 3-3"/>', s, 2.2),
     refresh: (s) => sv('<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>', s, 2.4),
     flag: (s) => sv('<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>', s, 2.4),
     target: (s) => sv('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>', s, 2.2),
@@ -481,9 +490,13 @@
     if (S.reminder.on && S.lastDay !== today() && (now.getHours() > hh || (now.getHours() === hh && now.getMinutes() >= mm))) {
       h += `<div class="banner">${esc(t.reminderToday)}</div>`;
     }
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !Android;
-    const standalone = window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
-    if (ios && !standalone) h += `<div class="banner" style="background:#EFF6FF;border-color:#BFDBFE;color:#1E3A8A">${esc(t.installHint)}</div>`;
+    if (canInstall() && !S.hideInstall) {
+      h += `<div class="banner" style="background:#EFF6FF;border-color:#BFDBFE;color:#1E3A8A;display:flex;align-items:center;gap:10px">
+        <span style="color:#1D4ED8;flex:none">${IC.phone(26)}</span>
+        <div class="col grow" style="gap:2px"><b>${esc(t.installTitle)}</b><span class="small">${esc(BIP ? t.installText : (isIOS() ? t.installIOS : t.installAndroid))}</span></div>
+        ${BIP ? `<button class="btn" data-act="install" style="flex:none;padding:8px 14px;min-height:0">${esc(t.installBtn)}</button>` : ''}
+        <button data-act="installHide" aria-label="×" style="flex:none;border:none;background:none;font-size:22px;line-height:1;color:#1E3A8A;cursor:pointer">×</button></div>`;
+    }
     return h;
   }
 
@@ -1023,7 +1036,9 @@
         <button class="prow" data-act="forceUpdate" style="width:100%;border:none;background:none;cursor:pointer;text-align:start"><span style="color:#1D4ED8">${IC.refresh(24)}</span>
           <div class="col grow"><span class="lbl">${esc(t.updateApp)}</span><span class="muted small">${esc(t.version)}: ${esc(APP_VERSION)}${Android && Android.getVersionName ? ' · APK ' + esc(Android.getVersionName()) : ''}</span></div>${IC.chev(20)}</button>
         <button class="prow" data-act="feedback" style="width:100%;border:none;background:none;cursor:pointer;text-align:start"><span style="color:#0F7F4F">${IC.chat(24)}</span>
-          <div class="col grow"><span class="lbl">${esc(t.feedbackTitle)}</span><span class="muted small">${esc(t.feedbackSub)}</span></div>${IC.chev(20)}</button></div>
+          <div class="col grow"><span class="lbl">${esc(t.feedbackTitle)}</span><span class="muted small">${esc(t.feedbackSub)}</span></div>${IC.chev(20)}</button>
+        ${canInstall() ? `<button class="prow" data-act="install" style="width:100%;border:none;background:none;cursor:pointer;text-align:start"><span style="color:#7C3AED">${IC.phone(24)}</span>
+          <div class="col grow"><span class="lbl">${esc(t.installTitle)}</span><span class="muted small">${esc(BIP ? t.installText : (isIOS() ? t.installIOS : t.installAndroid))}</span></div>${IC.chev(20)}</button>` : ''}</div>
       <div class="panel" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr))">
         <div class="col center gap6" style="padding:16px;border-inline-end:2px solid var(--soft)"><div class="stat" style="color:#B45309">${IC.flame(24)}${curStreak()}</div><div class="muted small">${esc(t.streak)}</div></div>
         <div class="col center gap6" style="padding:16px"><div class="stat" style="color:#1D4ED8">${IC.bolt(24)}${S.xp}</div><div class="muted small">XP · ${esc(t.levelN(level()))}</div></div>
@@ -1127,6 +1142,11 @@
     sendReport: () => sendReport(),
     suggest: () => openSuggest(),
     applyUpdate: () => applyUpdate(),
+    install: async () => {
+      if (BIP) { const e = BIP; BIP = null; try { e.prompt(); await e.userChoice; } catch (x) { /* */ } render(); return; }
+      toast(isIOS() ? L().installIOS : L().installAndroid);
+    },
+    installHide: () => { S.hideInstall = true; save(); render(); },
     apkUpdate: () => { if (Android && Android.downloadUpdate && UPD.apk) Android.downloadUpdate(UPD.apk.apk, UPD.apk.versionName || ''); },
     reset: () => confirmBox(L().resetConfirm, L().yes, () => { const lang = S.lang; const q = S.fbQueue; S = defaults(); S.lang = lang; S.fbQueue = q; save(); syncAndroid(); render(); })
   };
